@@ -12,12 +12,16 @@ from gzip import GzipFile
 #boto.config.add_section('Boto')
 #boto.config.set('Boto','http_socket_timeout', '400')
 
+class DoRetryException(Exception):
+    pass
+
+
 class IndexWARCJob(MRJob):
     INPUT_PROTOCOL = RawValueProtocol
     OUTPUT_PROTOCOL = RawValueProtocol
 
     HADOOP_INPUT_FORMAT = 'org.apache.hadoop.mapred.lib.NLineInputFormat'
-    JOBCONF = {'mapred.line.input.format.linespermap': 1}
+    JOBCONF = {'mapred.line.input.format.linespermap': 10}
 
     def mapper_init(self):
         self.conn = boto.connect_s3()
@@ -42,7 +46,7 @@ class IndexWARCJob(MRJob):
         try:
             self._load_and_index(warc_path)
         except DoRetryException as rt:
-            return 1
+            raise
         except Exception as exc:
             import traceback
             err_details = warc_path + '\n'
@@ -77,7 +81,11 @@ class IndexWARCJob(MRJob):
                 # Upload temp
                 cdxkey = self.cdx_bucket.new_key(cdx_path)
                 cdxtemp.flush()
-                cdxkey.set_contents_from_file(cdxtemp, rewind=True)
+
+                try:
+                    cdxkey.set_contents_from_file(cdxtemp, rewind=True)
+                except:
+                    raise DoRetryException()
 
 
 if __name__ == "__main__":
