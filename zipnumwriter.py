@@ -13,7 +13,9 @@ from mrjob.job import MRJob
 from mrjob.protocol import RawProtocol, RawValueProtocol
 
 NUM_LINES = 3000
-PART_FILE = 's3://cc-cdx-index/dec2014/splits/splits.seq'
+
+# must be set to splits file
+PART_FILE = 's3://path/to/splits_file'
 
 class ZipNumWriterJob(MRJob):
     HADOOP_INPUT_FORMAT = 'org.apache.hadoop.mapred.lib.CombineTextInputFormat'

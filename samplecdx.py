@@ -21,8 +21,6 @@ class SampleCDXJob(MRJob):
                'mapreduce.input.fileinputformat.split.maxsize': '50000000',
                'mapreduce.map.speculative': 'false',
                'mapreduce.reduce.speculative': 'false',
-
-#               'mapreduce.job.output.value.class': 'org.apache.hadoop.io.NullWritable'
               }
 
     def mapper_init(self):
