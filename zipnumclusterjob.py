@@ -10,16 +10,13 @@ import json
 from tempfile import TemporaryFile
 
 from mrjob.job import MRJob
+from mrjob.conf import combine_dicts
 from mrjob.protocol import RawProtocol, RawValueProtocol
 
-NUM_LINES = 3000
 
-# must be set to splits file
-PART_FILE = 's3://path/to/splits_file'
-
-class ZipNumWriterJob(MRJob):
+#=============================================================================
+class ZipNumClusterJob(MRJob):
     HADOOP_INPUT_FORMAT = 'org.apache.hadoop.mapred.lib.CombineTextInputFormat'
-    #HADOOP_OUTPUT_FORMAT = 'org.apache.hadoop.mapred.SequenceFileOutputFormat'
 
     PARTITIONER = 'org.apache.hadoop.mapred.lib.TotalOrderPartitioner'
 
@@ -27,13 +24,39 @@ class ZipNumWriterJob(MRJob):
     OUTPUT_PROTOCOL = RawValueProtocol
     INTERNAL_PROTOCOL = RawProtocol
 
-    JOBCONF = {'mapreduce.job.reduces': '302',
-               'mapreduce.input.fileinputformat.split.maxsize': '50000000',
-               'mapreduce.map.speculative': 'false',
-               'mapreduce.job.jvm.numtasks': '10',
-               'mapreduce.reduce.speculative': 'false',
+    JOBCONF =  {'mapreduce.task.timeout': '9600000',
+                'mapreduce.input.fileinputformat.split.maxsize': '50000000',
+                'mapreduce.map.speculative': 'false',
+                'mapreduce.reduce.speculative': 'false',
+                'mapreduce.job.jvm.numtasks': '-1'
+               }
 
-               'mapreduce.totalorderpartitioner.path': PART_FILE}
+    def configure_options(self):
+        """Custom command line options for indexing"""
+        super(ZipNumClusterJob, self).configure_options()
+
+        self.add_passthrough_option('--numlines', dest='numlines',
+                                    type=int,
+                                    default=3000,
+                                    help='Number of lines per gzipped block')
+
+        self.add_passthrough_option('--splitfile', dest='splitfile',
+                                    help='Split file to use for CDX shard split')
+
+        self.add_passthrough_option('--shards', dest='shards',
+                                    type=int,
+                                    help='Num ZipNum Shards to create, ' +
+                                         '= num of entries in splits + 1' +
+                                         '= num of reducers used')
+
+    def jobconf(self):
+        orig_jobconf = super(ZipNumClusterJob, self).jobconf()
+        custom_jobconf = {'mapreduce.job.reduces': self.options.shards,
+                          'mapreduce.totalorderpartitioner.path': self.options.splitfile}
+
+        combined = combine_dicts(orig_jobconf, custom_jobconf)
+        print(combined)
+        return combined
 
     def mapper_init(self):
         pass
@@ -57,11 +80,16 @@ class ZipNumWriterJob(MRJob):
         self.curr_key = ''
 
         self.part_num = int(os.environ.get('mapreduce_task_partition', '0'))
-        self.part_name = 'index-%05d.gz' % self.part_num
+        self.part_name = 'cdx-%05d.gz' % self.part_num
 
         self.gzip_temp = TemporaryFile(mode='w+b')
 
-        self.output_dir = os.environ['mapreduce_output_fileoutputformat_outputdir']
+        self.output_dir = os.environ.get('mapreduce_output_fileoutputformat_outputdir')
+        if not self.output_dir:
+            self.output_dir = self.options.output_dir
+
+        if not self.output_dir:
+            self.output_dir = '/tmp/'
 
     def reducer(self, key, values):
         if key:
@@ -74,7 +102,7 @@ class ZipNumWriterJob(MRJob):
         if len(self.curr_lines) == 1:
             self.curr_key = ' '.join(key.split(' ', 2)[0:2])
 
-        if len(self.curr_lines) >= NUM_LINES:
+        if len(self.curr_lines) >= self.options.numlines:
             yield '', self._write_part()
 
     def reducer_final(self):
@@ -118,4 +146,4 @@ class ZipNumWriterJob(MRJob):
         return partline
 
 if __name__ == "__main__":
-    ZipNumWriterJob.run()
+    ZipNumClusterJob.run()
