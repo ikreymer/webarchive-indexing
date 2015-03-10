@@ -32,7 +32,7 @@ A common transformation is to reverse subdomains `example.com` -> `com,example,)
 
 The indexing job uses the flexible pywb `cdx-indexer` to create indexs of a certain format. However, the other jobs are compatible with any existing CDX format as well. Other indexing tools can be used also but require seperate integration.
 
-### ZipNum Distributed CDX Cluster
+### ZipNum Sharded CDX Cluster
 
 A CDX file is generally accessed by doing a simple binary search through the file. This scales well to very large (multi-gigabyte) CDX files. However, for very large archives (many terabytes or petabytes), binary search across a single file has its limits.
 
@@ -106,7 +106,21 @@ The job creates a plain text file with N-1 lines.
 However, to be used with the final job, the file needs to be in a Hadoop `SequenceFile<Text, NullWritable>` format.
 Fortunatelly, the `python-hadoop` library provides an easy way to convert a text file to a Hadoop SequenceFile of this format.
 
-### 
+### Generating a ZipNum CDX Cluster
+
+The final job creates the [ZipNum Sharded CDX Cluster](#zipnum-sharded-cdx-cluster) from the individual CDX files (created in the first job) using the split file (created in the second job).
+
+To accomplish this, the Hadoop `TotalOrderPartitioner` is used which distributes CDX records across reducers in such a way to create a total ordering along the split points. Each reducers already sorts the inputs, and the partitioner ensures the all reducers only cover their particular split of the key space.
+
+Each reducer outputs the secondary index (one line per 3000 CDX lines), and creates a gzip file of the actual cdx lines as side-effect. Thus for each reducer, 0..N the following files are created
+
+* `part-N` - plain text secondary index
+* `index-N.gz` - gzipped cdx index, concatenated chunks of X (usually 3000) CDX lines in each chunk.
+
+After the job finishes and files are retrieved locally, running:
+`cat part-* > all.idx` is all that's needed to create a binary-searchable secondary index for the ZipNum Cluster.
+
+This index can then be used with existing tools, such as pywb and OpenWayback, which can read the index and provide a REST API for accessing the index.
 
 
 ### Dependencies
