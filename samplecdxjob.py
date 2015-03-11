@@ -47,7 +47,7 @@ class SampleCDXJob(MRJob):
                                          'will contain shards-1 splits')
 
     def mapper_init(self):
-        self.N = self.options.shards
+        self.N = self.options.shards * self.options.scaler
         self.H = []
 
     def mapper(self, _, line):
