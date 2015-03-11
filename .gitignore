@@ -37,6 +37,6 @@ nosetests.xml
 
 # Other
 mrjob.conf
-s3env.sh
+index_env.sh
 
 .vagrant
