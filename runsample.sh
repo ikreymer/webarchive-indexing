@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ./s3env.sh
+source ./index_env.sh
 
 python dosample.py \
 --shards=300 \
