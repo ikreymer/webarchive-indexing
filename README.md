@@ -1,15 +1,18 @@
 WebArchive Url Indexing
 =======================
 
-This repo contains several scripts (MapReduce jobs) for generating indexes of web archives. Often, an archive consists of a collection
-WARC and ARC files, which contains captures of web data. However, a WARC or ARC file typically do not have an index
-of url to archive content. Such indexes are usually built across multiple WARC or ARC files to allow for searching the
+This repo contains several scripts (MapReduce jobs) for generating indexes of web archives, collections of WARC (or ARC) files. WARC/ARC files typically do not have an index of url to archive content. Such indexes are usually built across multiple WARC or ARC files to allow for searching the
 entire archive collection. Some archived collections may span terabytes or even petabytes, and this repo provides an efficient and scalable way of creating indexes across such collections.
 
-## Tools Provided
-This repository provides three main tools, in the form of MapReduce jobs, to go from a set of WARC or ARC files to a distributed url index, in a format known as a ZipNum CDX cluster.
+*At this time, the tools here are designed to work on EMR and have been tested with CommonCrawl data set. 
 
-To accomplish this, 3 distinct jobs are provided:
+Eventually, the tools will be generalized to work on any Hadoop cluster.*
+
+## Tools Provided
+
+This repository provides three Hadoop MapReduce jobs to create [a shared url index](#zipnum-sharded-cdx-cluster) from an input list of WARC/ARC files.
+
+The three jobs are:
 
 1. [Indexing Individual ARC/WARCs to CDX Files](#indexing-individual-arcwarcs-to-cdx-files)
 2. [Sampling CDXs to Create Split File](#sampling-cdxs-to-create-split-file)
@@ -63,7 +66,7 @@ The distributed indexing job uses this tool to build an index for each file in p
 
 *Note: If you already have .cdx files for each of your WARC/ARCS, you may skip this step*
 
-The first job, provided by `indexwarcs.py` script, creates a cdx file for each WARC/ARC file in the input.
+The first job, provided by `indexwarcsjobs.py` script, creates a cdx file for each WARC/ARC file in the input.
 
 **Input:** A manifest file of WARC/ARCs to be indexed
 
@@ -91,7 +94,10 @@ Refer to `cdx-indexer -h` for list of possible options.
 
 ### Sampling CDXs to Create Split File ###
 
-The next job, `samplecdx.py` is used to previously created per-file CDX files to determine the *split points*. The final job will sort all the lines from all the CDX files into N parts (determined by number of reducers), however, in order to do so, it is necessary to determine a rough distribution of the url space.
+The next job, `samplecdxjob.py` determines *split points* for the cluster for an arbitrary number of splits. The final job will sort all the lines from all the CDX files into N parts (determined by number of reducers), however, in order to do so, it is necessary to determine a rough distribution of the url space.
+
+** Input: ** A path to per-WARC CDX files (created in step 1)
+** Output: ** A file containing split points to split CDX space into N shards (in hadoop SequenceFile format) to 
 
 *Note: This step is generally only necessary the first time a cluster is created. If a subsequent cluster with similar distribution is created, it is possible to reuse an existing split file. Additionally, it will be possible to create a more accurate split file directly from an existing cluster (TODO)*
 
@@ -104,15 +110,18 @@ The job creates a plain text file with N-1 lines.
 #### Converting to SequenceFile
 
 However, to be used with the final job, the file needs to be in a Hadoop `SequenceFile<Text, NullWritable>` format.
-Fortunatelly, the `python-hadoop` library provides an easy way to convert a text file to a Hadoop SequenceFile of this format.
+Fortunatelly, the `python-hadoop` library provides an easy way to convert a text file to a Hadoop SequenceFile of this format. The `dosample.py` script combines the map-reduce job with the SequenceFile conversion and then uploads the file sequencefile to final destination (currently S3 path).
 
 ### Generating a ZipNum CDX Cluster
 
-The final job creates the [ZipNum Sharded CDX Cluster](#zipnum-sharded-cdx-cluster) from the individual CDX files (created in the first job) using the split file (created in the second job).
+The final job, `zipnumclusterjob.py`, creates the [ZipNum Sharded CDX Cluster](#zipnum-sharded-cdx-cluster) from the individual CDX files (created in the first job) using the split file (created in the second job).
+
+** Input: ** Per-WARC CDX files and split points file (from previous two steps)
+** Output: ** Sharded compressed CDX split into N shards, with secondary index per shard
 
 To accomplish this, the Hadoop `TotalOrderPartitioner` is used which distributes CDX records across reducers in such a way to create a total ordering along the split points. Each reducers already sorts the inputs, and the partitioner ensures the all reducers only cover their particular split of the key space.
 
-Each reducer outputs the secondary index (one line per 3000 CDX lines), and creates a gzip file of the actual cdx lines as side-effect. Thus for each reducer, 0..N the following files are created
+Each reducer outputs the secondary index (one line per 3000 CDX lines), and creates a gzip file of the actual cdx lines as side-effect. Thus for each reducer, 0..N the following files are created.
 
 * `part-N` - plain text secondary index
 * `index-N.gz` - gzipped cdx index, concatenated chunks of X (usually 3000) CDX lines in each chunk.
