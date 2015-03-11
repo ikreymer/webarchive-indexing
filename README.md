@@ -4,7 +4,9 @@ WebArchive Url Indexing
 This repo contains several scripts (MapReduce jobs) for generating indexes of web archives, collections of WARC (or ARC) files. WARC/ARC files typically do not have an index of url to archive content. Such indexes are usually built across multiple WARC or ARC files to allow for searching the
 entire archive collection. Some archived collections may span terabytes or even petabytes, and this repo provides an efficient and scalable way of creating indexes across such collections.
 
-*At this time, the tools here are designed to work on EMR and have been tested with CommonCrawl data set. Eventually, the tools will be generalized to work on any Hadoop cluster as well*
+*At this time, the tools here are designed to work on EMR and have been tested with CommonCrawl data set. 
+
+Eventually, the tools will be generalized to work on any Hadoop cluster.*
 
 ## Tools Provided
 
