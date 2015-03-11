@@ -1,10 +1,9 @@
-import boto
-
 import random
 from heapq import heappush, heapreplace
 
 from mrjob.job import MRJob
-from mrjob.protocol import RawProtocol, RawValueProtocol
+from mrjob.protocol import RawValueProtocol
+
 
 #=============================================================================
 class SampleCDXJob(MRJob):
@@ -34,14 +33,21 @@ class SampleCDXJob(MRJob):
         self.add_passthrough_option('--shards', dest='shards',
                                     type=int,
                                     default=300,
-                                    help='Number of shards in output '+
+                                    help='Number of shards in output ' +
                                          '(create shards-1 splits')
 
-        self.add_passthrough_option('--seqfile', dest='seqfile',
-                                    help='Sequence File Location')
+        self.add_passthrough_option('--scaler', dest='scaler',
+                                    type=int,
+                                    default=100,
+                                    help='Scaler for sample size: ' +
+                                         'Sample size = shards * scaler')
+
+        self.add_passthrough_option('--splitfile', dest='splitfile',
+                                    help='Split file output dest, ' +
+                                         'will contain shards-1 splits')
 
     def mapper_init(self):
-        self.N = self.options.shards - 1
+        self.N = self.options.shards
         self.H = []
 
     def mapper(self, _, line):
@@ -64,18 +70,21 @@ class SampleCDXJob(MRJob):
             yield -r, x
 
     def reducer_init(self):
-        self.N = self.options.shards - 1
+        self.N = self.options.shards * self.options.scaler
         self.output_list = []
 
     def reducer(self, key, values):
         for x in values:
-            if len(self.output_list) > self.N:
+            if len(self.output_list) >= self.N:
                 return
 
             self.output_list.append(x)
 
     def reducer_final(self):
+        # sample sorted list by scaler, skip first element
+        # to get a N-1 even samples from N*SCALER set
         self.output_list = sorted(self.output_list)
+        self.output_list = self.output_list[0::self.options.scaler][1:]
         for x in self.output_list:
             yield '', x
 

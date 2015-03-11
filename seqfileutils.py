@@ -11,11 +11,14 @@ def make_text_null_seq(filename, reader):
     key = Text()
     value = NullWritable()
 
+    count = 0
     for x in reader:
         key.set(x)
         writer.append(key, value)
+        count += 1
 
     writer.close()
+    return count
 
 def count_file(filename):
     reader = SequenceFile.Reader(filename)

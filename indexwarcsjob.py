@@ -10,6 +10,7 @@ from pywb.warc.cdxindexer import write_cdx_index
 from gzip import GzipFile
 
 
+#=============================================================================
 class IndexWARCJob(MRJob):
     """ This job receives as input a manifest of WARC/ARC files and produces
     a CDX index per file
