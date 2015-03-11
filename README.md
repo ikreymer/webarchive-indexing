@@ -13,8 +13,9 @@ These tools use the MRJob Python library for Hadoop, and area pure-python soluti
 
 To run with MRJob library, a system-specific `mrjob.conf` needs to be configured. The file contains all the settings necessary to specify your Hadoop or EMR cluster. Refer to the [MRJob documentation for details](https://pythonhosted.org/mrjob/guides/configs-basics.html).
 
-In addition, a bash script `index_env.sh` is used to specify all the relevant paths. You can simply
-copy `cp index_env.sample.sh index_env.sh`. Please refer to the file for more details.
+In addition, a bash script `index_env.sh` is used to specify all the relevant paths. 
+
+You can simply run `cp index_env.sample.sh index_env.sh` to copy the provided sample. Please refer to the file for more details and to fill in the actual paths.
 
 ### Tools Provided
 
