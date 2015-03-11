@@ -4,6 +4,7 @@ from seqfileutils import make_text_null_seq
 import sys
 import tempfile
 import os
+import shutil
 
 SEQ_FILE = 'splits.seq'
 
@@ -19,7 +20,7 @@ def run_sample_job():
         # convert streaming output to sequence file
         count = make_text_null_seq(SEQ_FILE, runner.stream_output())
 
-    if job.options.splitfile and hasattr(job.fs, 'make_s3_key'):
+    if job.options.splitfile and hasattr(runner.fs, 'make_s3_key'):
         key = job.fs.make_s3_key(job.options.splitfile)
         key.set_contents_from_filename(SEQ_FILE)
 

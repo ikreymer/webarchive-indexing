@@ -10,5 +10,5 @@ python zipnumclusterjob.py \
 --conf-path ./mrjob.conf \
 --cmdenv AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
 --cmdenv AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
---r emr $WARC_CDX &> /tmp/emrrun.log &
+-r emr $WARC_CDX &> /tmp/emrrun.log &
 
