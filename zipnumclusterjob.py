@@ -1,4 +1,3 @@
-import boto
 import shutil
 import sys
 import os
@@ -43,6 +42,10 @@ class ZipNumClusterJob(MRJob):
         self.add_passthrough_option('--splitfile', dest='splitfile',
                                     help='Split file to use for CDX shard split')
 
+        self.add_passthrough_option('--convert', dest='convert',
+                                    action='store_true',
+                                    help='Convert CDX through _convert_line() function')
+
         self.add_passthrough_option('--shards', dest='shards',
                                     type=int,
                                     help='Num ZipNum Shards to create, ' +
@@ -55,7 +58,6 @@ class ZipNumClusterJob(MRJob):
                           'mapreduce.totalorderpartitioner.path': self.options.splitfile}
 
         combined = combine_dicts(orig_jobconf, custom_jobconf)
-        print(combined)
         return combined
 
     def mapper_init(self):
@@ -64,7 +66,8 @@ class ZipNumClusterJob(MRJob):
     def mapper(self, _, line):
         line = line.split('\t')[-1]
         if not line.startswith(' CDX'):
-            line = self._convert_line(line)
+            if self.options.convert:
+                line = self._convert_line(line)
             yield line, ''
 
     def _convert_line(self, line):
@@ -75,21 +78,27 @@ class ZipNumClusterJob(MRJob):
 
         return key + ' ' + ts + ' ' + json.dumps(vals)
 
+    def _get_prop(self, proplist):
+        for p in proplist:
+            res = os.environ.get(p)
+            if res:
+                return res
+
     def reducer_init(self):
         self.curr_lines = []
         self.curr_key = ''
 
-        self.part_num = int(os.environ.get('mapreduce_task_partition', '0'))
-        self.part_name = 'cdx-%05d.gz' % self.part_num
+        self.part_num = self._get_prop(['mapreduce_task_partition', 'mapred_task_partition'])
+        assert(self.part_num)
 
+        self.part_name = 'cdx-%05d.gz' % int(self.part_num)
+
+        self.output_dir = self._get_prop(['mapreduce_output_fileoutputformat_outputdir',
+                                          'mapred.output.dir',
+                                          'mapred_work_output_dir'])
+
+        assert(self.output_dir)
         self.gzip_temp = TemporaryFile(mode='w+b')
-
-        self.output_dir = os.environ.get('mapreduce_output_fileoutputformat_outputdir')
-        if not self.output_dir:
-            self.output_dir = self.options.output_dir
-
-        if not self.output_dir:
-            self.output_dir = '/tmp/'
 
     def reducer(self, key, values):
         if key:
@@ -113,14 +122,23 @@ class ZipNumClusterJob(MRJob):
 
     def _do_upload(self):
         self.gzip_temp.flush()
+        #TODO: move to generalized put() function
+        if self.output_dir.startswith('s3://'):
+            import boto
+            conn = boto.connect_s3()
+            parts = urlparse.urlsplit(self.output_dir)
 
-        conn = boto.connect_s3()
-        parts = urlparse.urlsplit(self.output_dir)
+            bucket = conn.lookup(parts.netloc)
 
-        bucket = conn.lookup(parts.netloc)
+            cdxkey = bucket.new_key(parts.path + '/' + self.part_name)
+            cdxkey.set_contents_from_file(self.gzip_temp, rewind=True)
+        else:
+            path = os.path.join(self.output_dir, self.part_name)
 
-        cdxkey = bucket.new_key(parts.path + '/' + self.part_name)
-        cdxkey.set_contents_from_file(self.gzip_temp, rewind=True)
+            self.gzip_temp.seek(0)
+
+            with open(path, 'w+b') as target:
+                shutil.copyfileobj(self.gzip_temp, target)
 
         self.gzip_temp.close()
 
