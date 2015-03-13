@@ -1,10 +1,12 @@
 WebArchive Url Indexing
 =======================
 
-This project contains several scripts (MapReduce jobs) for generating url indexes of web archive collections, ususally containing large number of of WARC (or ARC) files. The scripts are designed to ran in Hadoop or Amazon EMR to process
-terabytes or even petabytes of web archive content.
+This project contains several scripts (MapReduce jobs) for generating url indexes of web archive collections, ususally containing large number of of WARC (or ARC) files. The scripts are designed to ran in Hadoop or Amazon EMR to process terabytes or even petabytes of web archive content. Additionally, thanks to flexibility of the MRJob library,
+the scripts can also run on a local machine to build an index cluster.
 
-## Initial Setup and Usage
+To install [dependencies](#dependencies): `pip install -r requirements.txt`
+
+## Initial Setup and Usage -- EMR Usage
 
 *Note: At this time, the scripts are configured to work with EMR and have been tested with CommonCrawl data set. 
 Eventually, the tools will be generalized to work on any Hadoop cluster.*
@@ -26,7 +28,9 @@ This repository provides three Hadoop MapReduce jobs to create [a shared url ind
 3. [Generating a ZipNum CDX Cluster](#generating-a-zipnum-cdx-cluster)
 
 Each step is a mapreduce job, run with the Python MRJob library. The first step may be omitted if you already have
-indexs for the WARCs.
+indexes for the WARCs.
+
+If you have a small number of local cdx files, you also use these scripts to [build a local cluster](#building-a-local-cluster)
 
 [Additional background info on indexing and the formats used](#additional-info).
 
@@ -118,6 +122,31 @@ After the job finishes and files are retrieved locally, running:
 `cat part-* > all.idx` is all that's needed to create a binary-searchable secondary index for the ZipNum Cluster.
 
 This index can then be used with existing tools, such as pywb and OpenWayback, which can read the index and provide a REST API for accessing the index.
+
+## Building a local cluster
+
+Thanks to the flexibility of the mrjob, it is also possible to build a local ZipNum cluster, no Hadoop or EMR required!
+If you have a number of cdx files on disk, you can use the `build_local_zipnum.py` script to build a cluster locally.
+For example, the following will be a cluster of 25 shards. 
+
+```
+python build_local_zipnum.py /path/to/zipnum/ -s 25 -p /path/to/cdx/*.cdx.gz
+```
+
+(The `-p` flag will specify if parallel processes wil be created
+for each map/reduce task, or (if absent) all tasks will be created sequentially).
+
+After the script runs, the following files will be created:
+```
+/path/to/zipnum/part-000{00-24}
+/path/to/zipnum/cdx-000{00-24}.gz
+/path/to/zipnum/cluster.summary
+/path/to/zipnum/cluster.loc
+```
+
+The `cluster.summary` and `cluster.loc` files may be used with index ZipNum cluster support in the wayback machine, including
+pywb and OpenWayback.
+
 
 ### Dependencies
 
