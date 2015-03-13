@@ -133,7 +133,8 @@ This index can then be used with existing tools, such as pywb and OpenWayback, w
 
 Thanks to the flexibility of the MRJob library, it is also possible to build a local ZipNum cluster, no Hadoop or EMR required! (MRJob automatically computes even split points when running locally, so the split file computation step is not necessary).
 
-If you have a number of cdx files on disk, you can use the `build_local_zipnum.py` script to build a cluster locally.
+If you have a number of [CDX](#cdx-file-format) files on disk, you can use the `build_local_zipnum.py` script to directly build a cluster locally on your machine.
+
 For example, the following will be a cluster of 25 shards. 
 
 ```
