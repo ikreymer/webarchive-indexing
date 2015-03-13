@@ -4,20 +4,26 @@ WebArchive Url Indexing
 This project contains several scripts (MapReduce jobs) for generating url indexes of web archive collections, ususally containing large number of of WARC (or ARC) files. The scripts are designed to ran in Hadoop or Amazon EMR to process terabytes or even petabytes of web archive content. Additionally, thanks to flexibility of the MRJob library,
 the scripts can also run on a local machine to build an index cluster.
 
+## Initial Setup and Usage
+
+These tools use the MRJob Python library for Hadoop/EMR, and area pure-python solution to web archive indexing.
+
 To install [dependencies](#dependencies): `pip install -r requirements.txt`
 
-## Initial Setup and Usage -- EMR Usage
+#### Remote - EMR/Hadoop
 
 *Note: At this time, the scripts are configured to work with EMR and have been tested with CommonCrawl data set. 
 Eventually, the tools will be generalized to work on any Hadoop cluster.*
-
-These tools use the MRJob Python library for Hadoop, and area pure-python solution to web archive indexing.
 
 To run with MRJob library, a system-specific `mrjob.conf` needs to be configured. The file contains all the settings necessary to specify your Hadoop or EMR cluster. Refer to the [MRJob documentation for details](https://pythonhosted.org/mrjob/guides/configs-basics.html).
 
 In addition, a bash script `index_env.sh` is used to specify all the relevant paths. 
 
 You can simply run `cp index_env.sample.sh index_env.sh` to copy the provided sample. Please refer to the file for more details and to fill in the actual paths.
+
+#### Local
+
+No additional setup is necessary. See [building a local cluster](#building-a-local-cluster).
 
 ### Tools Provided
 
@@ -125,7 +131,8 @@ This index can then be used with existing tools, such as pywb and OpenWayback, w
 
 ## Building a local cluster
 
-Thanks to the flexibility of the mrjob, it is also possible to build a local ZipNum cluster, no Hadoop or EMR required!
+Thanks to the flexibility of the MRJob library, it is also possible to build a local ZipNum cluster, no Hadoop or EMR required! (MRJob automatically computes even split points when running locally, so the split file computation step is not necessary).
+
 If you have a number of cdx files on disk, you can use the `build_local_zipnum.py` script to build a cluster locally.
 For example, the following will be a cluster of 25 shards. 
 
