@@ -27,6 +27,8 @@ class ZipNumClusterJob(MRJob):
                 'mapreduce.input.fileinputformat.split.maxsize': '50000000',
                 'mapreduce.map.speculative': 'false',
                 'mapreduce.reduce.speculative': 'false',
+                'mapreduce.output.fileoutputformat.compress': 'false',
+                'mapreduce.job.reduce.slowstart.completedmaps': '0.8',
                 'mapreduce.job.jvm.numtasks': '-1'
                }
 
@@ -44,6 +46,7 @@ class ZipNumClusterJob(MRJob):
 
         self.add_passthrough_option('--convert', dest='convert',
                                     action='store_true',
+                                    default=False,
                                     help='Convert CDX through _convert_line() function')
 
         self.add_passthrough_option('--shards', dest='shards',

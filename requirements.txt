@@ -1,4 +1,5 @@
 mrjob
 boto
--e git+https://github.com/ikreymer/pywb.git@indexing-work#egg=pywb
+pywb
+#-e git+https://github.com/ikreymer/pywb.git@0.9.0b#egg=pywb
 -e git+https://github.com/matteobertozzi/Hadoop.git#egg=hadoop&subdirectory=python-hadoop

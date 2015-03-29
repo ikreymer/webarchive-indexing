@@ -30,7 +30,7 @@ class IndexWARCJob(MRJob):
                 'mapreduce.reduce.speculative': 'false',
                 'mapreduce.job.jvm.numtasks': '-1',
 
-                'mapreduce.input.lineinputformat.linespermap': 1,
+                'mapreduce.input.lineinputformat.linespermap': 2,
                 }
 
     def configure_options(self):
@@ -63,7 +63,7 @@ class IndexWARCJob(MRJob):
         self.index_options = {
             'surt_ordered': True,
             'sort': True,
-            'cdx06': True,
+            'cdxj': True,
             'minimal': True
         }
 
@@ -77,7 +77,7 @@ class IndexWARCJob(MRJob):
 
     def _conv_warc_to_cdx_path(self, warc_path):
         # set cdx path
-        cdx_path = warc_path.replace('common-crawl/crawl-data', '/cdx')
+        cdx_path = warc_path.replace('common-crawl/crawl-data', 'cdx2')
         cdx_path = cdx_path.replace('.warc.gz', '.cdx.gz')
         return cdx_path
 
