@@ -6,7 +6,7 @@ the scripts can also run on a local machine to build an index cluster.
 
 ## Initial Setup and Usage
 
-These tools use the MRJob Python library for Hadoop/EMR, and area pure-python solution to web archive indexing.
+These tools use the MRJob Python library for Hadoop/EMR, and are a pure-python solution to web archive indexing.
 
 To install [dependencies](#dependencies): `pip install -r requirements.txt`
 
@@ -33,7 +33,7 @@ This repository provides three Hadoop MapReduce jobs to create [a shared url ind
 2. [Sampling CDXs to Create Split File](#sampling-cdxs-to-create-split-file)
 3. [Generating a ZipNum CDX Cluster](#generating-a-zipnum-cdx-cluster)
 
-Each step is a mapreduce job, run with the Python MRJob library. The first step may be omitted if you already have
+Each step is a MapReduce job, run with the Python MRJob library. The first step may be omitted if you already have
 indexes for the WARCs.
 
 If you have a small number of local cdx files, you also use these scripts to [build a local cluster](#building-a-local-cluster)
@@ -88,8 +88,9 @@ runsample.sh
 
 The actual job, defined in  `samplecdxjob.py` determines *split points* for the cluster for an arbitrary number of splits. The final job will sort all the lines from all the CDX files into N parts (determined by number of reducers), however, in order to do so, it is necessary to determine a rough distribution of the url space.
 
-** Input: ** A path to per-WARC CDX files (created in step 1)
-** Output: ** A file containing split points to split CDX space into N shards (in hadoop SequenceFile format) to 
+**Input:** A path to per-WARC CDX files (created in step 1)
+
+**Output:** A file containing split points to split CDX space into N shards (in hadoop SequenceFile format) to 
 
 *Note: This step is generally only necessary the first time a cluster is created. If a subsequent cluster with similar distribution is created, it is possible to reuse an existing split file. Additionally, it will be possible to create a more accurate split file directly from an existing cluster (TODO)*
 
@@ -114,8 +115,9 @@ runzipcluster.sh
 
 The corresponding script, `zipnumclusterjob.py`, creates the [ZipNum Sharded CDX Cluster](#zipnum-sharded-cdx-cluster) from the individual CDX files (created in the first job) using the split file (created in the second job).
 
-** Input: ** Per-WARC CDX files and split points file (from previous two steps)
-** Output: ** Sharded compressed CDX split into N shards, with secondary index per shard
+**Input:** Per-WARC CDX files and split points file (from previous two steps)
+
+**Output:** Sharded compressed CDX split into N shards, with secondary index per shard
 
 To accomplish this, the Hadoop `TotalOrderPartitioner` is used which distributes CDX records across reducers in such a way to create a total ordering along the split points. Each reducers already sorts the inputs, and the partitioner ensures the all reducers only cover their particular split of the key space.
 
