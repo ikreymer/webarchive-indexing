@@ -9,8 +9,9 @@ import sys
 
 log = logging.getLogger(__name__)
 
+
 #=============================================================================
-def run_job(input_path, output_dir, shards, parallel):
+def run_job(input_path, output_dir, shards, parallel, lines=None):
     args = ['--no-output', '--output-dir', output_dir, '-r']
     if parallel:
         args.append('local')
@@ -19,13 +20,18 @@ def run_job(input_path, output_dir, shards, parallel):
 
     args.append('--shards=' + str(shards))
 
+    if lines:
+        args.append('--numlines=' + str(lines))
+
     if isinstance(input_path, list):
         args.extend(input_path)
     else:
         args.append(input_path)
 
+    output_dir = os.path.abspath(output_dir)
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
+
     os.environ['mapreduce_output_fileoutputformat_outputdir'] = output_dir
 
     job = ZipNumClusterJob(args)
@@ -42,11 +48,16 @@ def build_summary_and_loc(output_dir):
 
     summary_file = os.path.join(output_dir, 'cluster.summary')
     print('Building Summary File: ' + summary_file)
+
+    count = 1
     with open(summary_file, 'w+b') as fh:
         for filein in inputs:
             with open(filein, 'r+b') as partfh:
                 for line in partfh:
-                    fh.write(line)
+                    line = line.rstrip()
+                    line += '\t' + str(count)
+                    fh.write(line + '\n')
+                    count += 1
 
     # Write loc file
     full = os.path.join(output_dir, 'cdx-*')
@@ -67,6 +78,9 @@ def main():
     parser.add_argument('-s', '--shards', default=10, type=int,
                         help='Number of ZipNum Cluster shards to create')
 
+    parser.add_argument('-l', '--numlines', default=3000, type=int,
+                        help='Number of lines per gzip block (default 3000)')
+
     parser.add_argument('-p', '--parallel', action='store_true',
                         help='Run in parllel (multiple maps/reducer processes)')
 
@@ -80,7 +94,7 @@ def main():
     compat_log = logging.getLogger('mrjob.compat')
     compat_log.setLevel(logging.ERROR)
 
-    run_job(r.inputs, r.output, r.shards, r.parallel)
+    run_job(r.inputs, r.output, r.shards, r.parallel, r.numlines)
     build_summary_and_loc(r.output)
 
 if __name__ == "__main__":
