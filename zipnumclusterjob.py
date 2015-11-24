@@ -150,7 +150,7 @@ class ZipNumClusterJob(MRJob):
 
         offset = self.gzip_temp.tell()
 
-        buff = '\n'.join(self.curr_lines)
+        buff = '\n'.join(self.curr_lines) + '\n'
         self.curr_lines = []
 
         buff = z.compress(buff)
