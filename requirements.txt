@@ -1,5 +1,5 @@
 mrjob
 boto
 pywb
-#-e git+https://github.com/ikreymer/pywb.git@0.9.0b#egg=pywb
--e git+https://github.com/matteobertozzi/Hadoop.git#egg=hadoop&subdirectory=python-hadoop
+#-e git+https://github.com/matteobertozzi/Hadoop.git#egg=hadoop&subdirectory=python-hadoop
+-e git+https://github.com/commoncrawl/python-hadoop.git#egg=master

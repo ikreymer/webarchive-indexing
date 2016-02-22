@@ -64,7 +64,7 @@ class IndexWARCJob(MRJob):
             'surt_ordered': True,
             'sort': True,
             'cdxj': True,
-            'minimal': True
+            #'minimal': True
         }
 
     def mapper(self, _, line):
@@ -77,7 +77,7 @@ class IndexWARCJob(MRJob):
 
     def _conv_warc_to_cdx_path(self, warc_path):
         # set cdx path
-        cdx_path = warc_path.replace('common-crawl/crawl-data', 'cdx2')
+        cdx_path = warc_path.replace('common-crawl/crawl-data', 'common-crawl/cc-index/cdx')
         cdx_path = cdx_path.replace('.warc.gz', '.cdx.gz')
         return cdx_path
 
