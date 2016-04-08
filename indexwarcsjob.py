@@ -38,7 +38,7 @@ class IndexWARCJob(MRJob):
         super(IndexWARCJob, self).configure_options()
 
         self.add_passthrough_option('--warc_bucket', dest='warc_bucket',
-                                    default='aws-publicdatasets',
+                                    default='commoncrawl',
                                     help='source bucket for warc paths, if input is a relative path (S3 Only)')
 
         self.add_passthrough_option('--cdx_bucket', dest='cdx_bucket',
@@ -77,7 +77,7 @@ class IndexWARCJob(MRJob):
 
     def _conv_warc_to_cdx_path(self, warc_path):
         # set cdx path
-        cdx_path = warc_path.replace('common-crawl/crawl-data', 'common-crawl/cc-index/cdx')
+        cdx_path = warc_path.replace('crawl-data', 'cc-index/cdx')
         cdx_path = cdx_path.replace('.warc.gz', '.cdx.gz')
         return cdx_path
 
