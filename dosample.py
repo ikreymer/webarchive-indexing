@@ -4,7 +4,6 @@ from seqfileutils import make_text_null_seq
 import sys
 import tempfile
 import os
-import shutil
 
 SEQ_FILE = 'splits.seq'
 
@@ -15,7 +14,7 @@ def run_sample_job():
         runner.run()
 
         if os.path.isfile(SEQ_FILE):
-            shutil.remove(SEQ_FILE)
+            os.remove(SEQ_FILE)
 
         # convert streaming output to sequence file
         count = make_text_null_seq(SEQ_FILE, runner.stream_output())
