@@ -23,6 +23,10 @@ class SampleCDXJob(MRJob):
                 'mapreduce.reduce.speculative': 'false',
                 'mapreduce.job.jvm.numtasks': '-1',
 
+                # the output should not be compressed even if the default is to compress output,
+                # otherwise reading from MRJobRunner.stream_output() needs decompression on the fly
+                'mapreduce.output.fileoutputformat.compress': 'false',
+
                 'mapreduce.job.reduces': '1'
                }
 

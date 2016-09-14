@@ -12,14 +12,13 @@ To install [dependencies](#dependencies): `pip install -r requirements.txt`
 
 #### Remote - EMR/Hadoop
 
-*Note: At this time, the scripts are configured to work with EMR and have been tested with CommonCrawl data set. 
-Eventually, the tools will be generalized to work on any Hadoop cluster.*
+*Note: At this time, the scripts have been tested with the CommonCrawl data set on EMR (AMI 3.9.0 + Hadoop 2.4.0) and on CDH 5.8.0.*
 
-To run with MRJob library, a system-specific `mrjob.conf` needs to be configured. The file contains all the settings necessary to specify your Hadoop or EMR cluster. Refer to the [MRJob documentation for details](https://pythonhosted.org/mrjob/guides/configs-basics.html).
+To run with MRJob library on EMR, a system-specific `mrjob.conf` needs to be configured. The file contains all the settings necessary to specify your EMR cluster or to configure non-default settings on other Hadoop clusters. Refer to the [MRJob documentation for details](https://pythonhosted.org/mrjob/guides/configs-basics.html). The shell scripts to launch the tools are supposed to be run on EMR, for other Hadoop clusters replace `-r emr` by `-r hadoop`.
 
-In addition, a bash script `index_env.sh` is used to specify all the relevant paths. 
+In addition, a bash script `index_env.sh` is used to specify all the relevant paths.
 
-You can simply run `cp index_env.sample.sh index_env.sh` to copy the provided sample. Please refer to the file for more details and to fill in the actual paths.
+You can simply run `cp index_env.sample.sh index_env.sh` to copy the provided sample. Please refer to the file for more details and to fill in the actual paths. Note that on EMR paths to AWS S3 have to be given as `s3://bucket/path` while on Hadoop (no EMR) paths must start with `s3a://`.
 
 #### Local
 

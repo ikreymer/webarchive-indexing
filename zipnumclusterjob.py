@@ -126,7 +126,7 @@ class ZipNumClusterJob(MRJob):
     def _do_upload(self):
         self.gzip_temp.flush()
         #TODO: move to generalized put() function
-        if self.output_dir.startswith('s3://'):
+        if self.output_dir.startswith('s3://') or self.output_dir.startswith('s3a://'):
             import boto
             conn = boto.connect_s3()
             parts = urlparse.urlsplit(self.output_dir)
