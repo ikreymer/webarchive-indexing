@@ -20,6 +20,8 @@ In addition, a bash script `index_env.sh` is used to specify all the relevant pa
 
 You can simply run `cp index_env.sample.sh index_env.sh` to copy the provided sample. Please refer to the file for more details and to fill in the actual paths. Note that on EMR paths to AWS S3 have to be given as `s3://bucket/path` while on Hadoop (no EMR) paths must start with `s3a://`.
 
+Requirements have to be installed on all nodes of the cluster. The script `bootstrap.sh` installs everything needed on EMR, including Python and packages necessary to compile the requirements.
+
 #### Local
 
 No additional setup is necessary. See [building a local cluster](#building-a-local-cluster).
