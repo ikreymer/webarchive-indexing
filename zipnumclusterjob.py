@@ -28,7 +28,7 @@ class ZipNumClusterJob(MRJob):
                 'mapreduce.map.speculative': 'false',
                 'mapreduce.reduce.speculative': 'false',
                 'mapreduce.output.fileoutputformat.compress': 'false',
-                'mapreduce.job.reduce.slowstart.completedmaps': '0.8',
+                'mapreduce.job.reduce.slowstart.completedmaps': '1.0',
                 'mapreduce.job.jvm.numtasks': '-1'
                }
 
