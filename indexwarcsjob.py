@@ -1,5 +1,4 @@
 import boto
-import shutil
 import sys
 
 from mrjob.job import MRJob
@@ -90,11 +89,11 @@ class IndexWARCJob(MRJob):
             cdxkey = self.cdx_bucket.get_key(cdx_path)
 
             if cdxkey:
-                sys.stderr.write('Already Exists\n')
+                sys.stderr.write('Already Exists: {}\n'.format(cdx_path))
                 return
 
         with TemporaryFile(mode='w+b') as warctemp:
-            shutil.copyfileobj(warckey, warctemp)
+            warckey.get_file(warctemp, override_num_retries=10)
 
             warctemp.seek(0)
 
