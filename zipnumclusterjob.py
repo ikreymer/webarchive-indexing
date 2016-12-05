@@ -28,7 +28,7 @@ class ZipNumClusterJob(MRJob):
                 'mapreduce.map.speculative': 'false',
                 'mapreduce.reduce.speculative': 'false',
                 'mapreduce.output.fileoutputformat.compress': 'false',
-                'mapreduce.job.reduce.slowstart.completedmaps': '0.8',
+                'mapreduce.job.reduce.slowstart.completedmaps': '1.0',
                 'mapreduce.job.jvm.numtasks': '-1'
                }
 
@@ -126,7 +126,7 @@ class ZipNumClusterJob(MRJob):
     def _do_upload(self):
         self.gzip_temp.flush()
         #TODO: move to generalized put() function
-        if self.output_dir.startswith('s3://'):
+        if self.output_dir.startswith('s3://') or self.output_dir.startswith('s3a://'):
             import boto
             conn = boto.connect_s3()
             parts = urlparse.urlsplit(self.output_dir)

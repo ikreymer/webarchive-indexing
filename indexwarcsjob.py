@@ -1,5 +1,4 @@
 import boto
-import shutil
 import sys
 
 from mrjob.job import MRJob
@@ -38,7 +37,7 @@ class IndexWARCJob(MRJob):
         super(IndexWARCJob, self).configure_options()
 
         self.add_passthrough_option('--warc_bucket', dest='warc_bucket',
-                                    default='aws-publicdatasets',
+                                    default='commoncrawl',
                                     help='source bucket for warc paths, if input is a relative path (S3 Only)')
 
         self.add_passthrough_option('--cdx_bucket', dest='cdx_bucket',
@@ -77,7 +76,7 @@ class IndexWARCJob(MRJob):
 
     def _conv_warc_to_cdx_path(self, warc_path):
         # set cdx path
-        cdx_path = warc_path.replace('common-crawl/crawl-data', 'common-crawl/cc-index/cdx')
+        cdx_path = warc_path.replace('crawl-data', 'cc-index/cdx')
         cdx_path = cdx_path.replace('.warc.gz', '.cdx.gz')
         return cdx_path
 
@@ -90,11 +89,11 @@ class IndexWARCJob(MRJob):
             cdxkey = self.cdx_bucket.get_key(cdx_path)
 
             if cdxkey:
-                sys.stderr.write('Already Exists\n')
+                sys.stderr.write('Already Exists: {}\n'.format(cdx_path))
                 return
 
         with TemporaryFile(mode='w+b') as warctemp:
-            shutil.copyfileobj(warckey, warctemp)
+            warckey.get_file(warctemp, override_num_retries=10)
 
             warctemp.seek(0)
 
